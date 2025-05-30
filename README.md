@@ -17,7 +17,7 @@ A Windows-based HTA (HTML Application) console application for system administra
 
 ## Structure
 
-- `SLOEACSS-console.hta` - Main application file
+- `SHIRMIN-console.hta` - Main application file
 - `console/` - Core application modules
 - `header/` - Header components
 - `status/` - Status monitoring components
