@@ -25,4 +25,4 @@ A Windows-based HTA (HTML Application) console application for system administra
 
 ## Usage
 
-Double-click the `SLOEACSS-console.hta` file to launch the application.
+Double-click the `SHIRMIN-console.hta` file to launch the application.
