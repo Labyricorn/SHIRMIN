@@ -1,4 +1,4 @@
-# SLOEACSS Console
+# SHIRMIN Console
 
 A Windows-based HTA (HTML Application) console application for system administration and management.
 
