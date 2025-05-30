@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network IP Scanner</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"] { width: 200px; padding: 5px; }
+        button { padding: 8px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #results { margin-top: 20px; padding: 10px; border: 1px solid #ddd; min-height: 200px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>IP Scanner</h2>
+        <div class="form-group">
+            <label for="startIP">Start IP Address:</label>
+            <input type="text" id="startIP" name="startIP" value="192.168.1.1">
+        </div>
+        <div class="form-group">
+            <label for="endIP">End IP Address:</label>
+            <input type="text" id="endIP" name="endIP" value="192.168.1.254">
+        </div>
+        <button language="VBScript" onclick="call scanNetwork">Scan Network</button>
+        <div id="results"></div>
+    </div>
+
+    <script language="VBScript">
+    ' Function to validate IP address format
+    Function IsValidIP(ipAddress)
+        Dim parts, i, num
+        parts = Split(ipAddress, ".")
+        
+        ' Check if we have exactly 4 parts
+        If UBound(parts) <> 3 Then
+            IsValidIP = False
+            Exit Function
+        End If
+        
+        ' Check each octet
+        For i = 0 To 3
+            ' Check if it's a valid number
+            If Not IsNumeric(parts(i)) Then
+                IsValidIP = False
+                Exit Function
+            End If
+            
+            ' Convert to number and check range
+            num = CInt(parts(i))
+            If num < 0 Or num > 255 Then
+                IsValidIP = False
+                Exit Function
+            End If
+        Next
+        
+        IsValidIP = True
+    End Function
+
+    ' Function to compare two IP addresses
+    Function CompareIP(ip1, ip2)
+        Dim parts1, parts2, i
+        parts1 = Split(ip1, ".")
+        parts2 = Split(ip2, ".")
+        
+        For i = 0 To 3
+            If CInt(parts1(i)) < CInt(parts2(i)) Then
+                CompareIP = -1
+                Exit Function
+            ElseIf CInt(parts1(i)) > CInt(parts2(i)) Then
+                CompareIP = 1
+                Exit Function
+            End If
+        Next
+        CompareIP = 0
+    End Function
+
+    ' Function to increment IP address
+    Function IncrementIP(ipAddress)
+        Dim parts, i
+        parts = Split(ipAddress, ".")
+        
+        For i = 3 To 0 Step -1
+            If CInt(parts(i)) < 255 Then
+                parts(i) = CStr(CInt(parts(i)) + 1)
+                Exit For
+            Else
+                parts(i) = "0"
+            End If
+        Next
+        
+        IncrementIP = parts(0) & "." & parts(1) & "." & parts(2) & "." & parts(3)
+    End Function
+
+    ' Function to ping an IP address with timeout
+    Function PingHost(ipAddress)
+        Dim objPing, objStatus, item
+        
+        ' Initialize return value to False
+        PingHost = False
+        
+        ' Create WMI object for ping with timeout
+        Set objPing = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\cimv2")
+        Set objStatus = objPing.ExecQuery("SELECT * FROM Win32_PingStatus WHERE Address = '" & ipAddress & "' AND Timeout = 500")
+        
+        ' Check ping results
+        For Each item In objStatus
+            If Not IsNull(item.StatusCode) And item.StatusCode = 0 Then
+                PingHost = True
+                Exit For
+            End If
+        Next
+        
+        ' Clean up objects
+        Set item = Nothing
+        Set objStatus = Nothing
+        Set objPing = Nothing
+    End Function
+
+    ' Main scanning function with UI updates
+    Sub scanNetwork
+        Dim startIP, endIP, currentIP
+        Dim resultsDiv, foundCount, scannedCount
+        
+        startIP = document.getElementById("startIP").value
+        endIP = document.getElementById("endIP").value
+        
+        ' Validate IP addresses
+        If Not IsValidIP(startIP) Or Not IsValidIP(endIP) Then
+            MsgBox "Please enter valid IP addresses"
+            Exit Sub
+        End If
+        
+        Set resultsDiv = document.getElementById("results")
+        resultsDiv.innerHTML = "Scanning in progress...<br>"
+        
+        ' Check if start IP is less than end IP
+        If CompareIP(startIP, endIP) > 0 Then
+            MsgBox "Start IP must be less than End IP"
+            Exit Sub
+        End If
+        
+        currentIP = startIP
+        foundCount = 0
+        scannedCount = 0
+        
+        ' Start scanning
+        While CompareIP(currentIP, endIP) <= 0
+            scannedCount = scannedCount + 1
+            
+            ' Update progress every IP
+            resultsDiv.innerHTML = "Scanning IP: " & currentIP & "<br>" & resultsDiv.innerHTML
+            
+            ' Allow UI to update
+            Call window.setTimeout("DoEvents", 1)
+            
+            If PingHost(currentIP) Then
+                foundCount = foundCount + 1
+                resultsDiv.innerHTML = currentIP & " - Responding<br>" & resultsDiv.innerHTML
+            End If
+            
+            currentIP = IncrementIP(currentIP)
+        Wend
+        
+        resultsDiv.innerHTML = "<br>Scan complete. Found " & foundCount & " active hosts out of " & scannedCount & " IPs scanned.<br>" & resultsDiv.innerHTML
+    End Sub
+    ' Subroutine to handle UI updates
+    Sub DoEvents
+        ' This empty subroutine allows the UI to process events
+    End Sub
+    </script>
+</body>
+</html>

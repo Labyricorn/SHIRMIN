@@ -1,0 +1,50 @@
+<!-- Navigation Bar Component -->
+<!-- Provides main navigation menu for the SLOEACSS Console -->
+
+<!-- Navigation Bar Styles -->
+<style>
+/* Navigation link styling */
+a {
+    float: left;
+    width: 6em;
+    text-decoration: none;
+    color: white;
+    background-color: #244A9F;
+    padding: 0.2em 0.6em;
+    border-right: 1px solid white;
+}
+
+/* Hover effect for navigation links */
+a:hover {
+    background-color: blue;
+}
+
+/* Display list items horizontally */
+li {
+    display: inline;
+}
+</style>
+
+<!-- Header Component with Navigation -->
+<body bgcolor="grey">
+<!-- Main header layout table -->
+<table>
+<tr>
+    <!-- Logo image -->
+    <td><img height=22 width=100 src="shirmmin.png"></td>
+    <!-- Navigation menu -->
+    <td>
+        <ul>
+            <!-- Local navigation links -->
+            <li><a href="..\console\connection\main.htm" target="console">Connectivity</a></li>
+            <li><a href="..\console\computers\main.htm" target="console">Computers</a></li>
+            <li><a href="..\console\devices\main.htm" target="console">Devices</a></li>
+            <li><a href="..\console\network\main.htm" target="console">Network</a></li>
+            <!-- Help and About links -->
+            <li><a href="..\console\help\main.htm" target="console">Help</a></li>
+            <li><a href="..\console\about\main.htm" target="console">About</a></li>
+        </ul>
+    </td>
+</tr>
+</table>
+</body>

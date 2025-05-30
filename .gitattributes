@@ -1,0 +1,22 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# HTA files
+*.hta text
+
+# HTML files
+*.htm text
+*.html text
+
+# Scripts
+*.vbs text
+*.js text
+
+# Images should be treated as binary
+*.png binary
+*.ico binary
+*.jpg binary
+*.gif binary
+
+# Documents
+*.pdf binary

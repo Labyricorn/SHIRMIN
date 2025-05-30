@@ -1,0 +1,337 @@
+<html>
+<head>
+<HTA:APPLICATION
+  APPLICATIONNAME="HTAlistomatic"
+  ID="objHTAlistomatic"/>
+</head>
+<style>
+	BODY
+	{
+		background-color:#CB9F5B;
+		color:MenuText;
+		cursor:default;
+
+	   font-family: Helvetica;
+	   font-size: 10pt;
+	   margin-top: 10px;
+	   margin-left: 20px;
+	   margin-right: 20px;
+	   margin-bottom: 10px;
+	}
+
+	.button
+	{
+	   font-family: Helvetica;
+	   font-size: 8pt;
+	   width: 92px;
+
+	}
+
+	textarea
+	{
+	   font-family: arial;
+	   font-size: 8pt;
+	}
+
+	select
+	{
+	   font-family: arial;
+	   font-size: 8pt;
+	   width: 250px;
+	   margin-left: 0px;
+	}
+
+	td
+	{
+	   font-family: arial;
+	   font-size: 10pt;
+	}
+</style>
+
+<SCRIPT Language="VBScript">
+Const ADS_SCOPE_SUBTREE = 2
+Dim oWS, intPCcount, commandMsg
+Dim lb(100,1), itemCount
+
+Sub Window_OnLoad()
+	intPCcount = 0
+	header.InnerHtml =  intPCcount
+End Sub
+
+Sub ListOU ( strOU )
+	'setup AD connection
+	'MsgBox strOU
+	Set objConnection = CreateObject("ADODB.Connection")
+	Set objCommand =   CreateObject("ADODB.Command")
+	objConnection.Provider = "ADsDSOObject"
+	objConnection.Open "Active Directory Provider"
+	Set objCommand.ActiveConnection = objConnection
+	objCommand.Properties("Page Size") = 100
+	objCommand.Properties("Searchscope") = ADS_SCOPE_SUBTREE 
+	objCommand.CommandText = _
+		"SELECT cn FROM " _
+			& "'LDAP://" & strOU & ",ou=Win10,ou=EACSS Workstations,dc=ncao,dc=eacss,dc=com' WHERE " _
+				& "objectCategory='computer'"  
+	Set objRecordSet = objCommand.Execute
+	objRecordSet.MoveFirst
+	'list computer names from OU
+	Do Until objRecordSet.EOF
+		strComputerName = objRecordSet.Fields("cn").Value
+		AddToList strComputerName,strComputerName
+		objRecordSet.MoveNext
+	Loop
+End Sub
+
+Sub ListTXT( strFileName )
+	'open file
+	Set objFSO = CreateObject("Scripting.FileSystemObject")
+	Set objFile = objFSO.OpenTextFile(strFileName)
+	If Not objFSO.FileExists(strFileName) Then
+		MsgBox (strFileName & " does not exist.")
+	End If
+	'add computer names to list
+	Do Until objFile.AtEndOfStream
+		strComputerName = objFile.ReadLine
+		AddToList strComputerName,strComputerName
+	Loop
+	objFile.Close
+End Sub
+
+Sub ListSessions( computer )
+	Dim NewTxt
+	Dim objComputer
+	Set objServer = GetObject("WinNT://BOR/" & computer & "/LanmanServer") 
+
+	For Each objSession In objServer.Sessions
+		If Left(objSession.Computer, 3) = "140" Then
+			objComputer = Resolve(objSession.Computer)
+		Else
+			objComputer = objSession.Computer
+		End If
+		NewTxt = "<br>" & objSession.User & ", " & objComputer
+		If UCase(Left(objSession.User, 4)) = "ADM-" Then
+			DoNothing
+		Else
+			'AddToComputers objComputer,objSession.User
+			AddToList objSession.User,objComputer
+		End If
+	Next
+
+End Sub
+
+Function Resolve( ipaddress )
+	on Error Resume Next
+	Dim oWMI, oPing, oItem
+	Dim sIP, sHost
+
+	Set oWMI = GetObject("WinMgmts:")
+
+	sIP = ipaddress
+
+	Set oPing = oWMI.ExecQuery("SELECT * From Win32_PingStatus WHERE Address='" & sIP & "' AND ResolveAddressNames=TRUE")
+	For Each oItem in oPing
+		sHost=oItem.ProtocolAddressResolved
+	Next
+	If Len(sHost) > 0 Then
+		Resolve = Left(sHost,(InStr(sHost,".")-1))
+	Else
+		Resolve = "unresolved"
+	End If
+End Function
+
+Sub AddToList( txt, val )
+	itemCount = itemCount + 1
+	lb(itemCount,0) = txt
+	lb(itemCount,1) = val
+End Sub
+
+Sub MoveToListBox()
+	For moveCount = 1 to itemCount
+		Set objOption = Document.createElement("OPTION")	
+		objOption.Text = lb(moveCount,0)
+		objOption.Value = lb(moveCount,1)
+		OptionList.Add(objOption)
+		intPCcount = intPCcount + 1	
+	Next
+	header.InnerHtml =  intPCcount
+End Sub
+
+Sub Sort()
+	Dim i, j, txtHolder, valHolder
+
+	For i = ( itemCount - 1 ) to 0 Step -1
+		For j= 0 to i
+			If UCase( lb( j , 0 ) ) > UCase( lb( j + 1 , 0 ) ) Then
+				txtHolder        = lb( j + 1 , 0 )
+				valHolder		 = lb( j+ 1 , 1 )
+				lb( j + 1 , 0 ) = lb( j , 0 )
+				lb( j + 1 , 1 ) = lb( j , 1)
+				lb( j , 0 )     = txtHolder
+				lb( j , 1 )     = valHolder
+			End If
+		Next
+	Next 
+End Sub
+
+Sub CopyClip()
+	document.parentwindow.clipboardData.SetData "text",OptionList.Value
+End Sub
+
+Sub DisplayOption
+	computername.Value = UCase(OptionList.Value)
+End Sub
+
+Sub ResetScript
+	Location.Reload(True)	'This reloads, clearing all
+End Sub
+
+Sub DoNothing
+End Sub
+	
+
+Sub Sessions(txtServer)
+	ClearList()
+	ListSessions(txtServer)
+	Sort
+	MoveToListBox
+End Sub
+
+Sub DisplayOU(txtOU)
+	'Location.Reload(True)
+	ClearList()
+	ListOU(txtOU)
+	Sort
+	MoveToListBox
+End Sub
+
+Sub ClearList()
+	ClearArray(lb)
+	For Each objOption in OptionList.Options
+        objOption.RemoveNode
+    Next 
+  	itemCount = 0
+  	intPCcount = 0
+End Sub    
+
+Sub ClearArray(ByRef arr)
+  For i = 0 To UBound(arr, 1)
+    For j = 0 To UBound(arr, 2)
+      arr(i, j) = Null
+    Next
+  Next
+End Sub
+
+Sub OnClickButtonUse()
+  'This method will be called when button "Use" is clicked
+  On Error Resume Next
+     window.Parent.content.txtComputer.Value = computername.Value
+  
+  If Err.Number <> 0 Then
+  	Window.Parent.content.Location.HREF=".\compinfo.htm"
+    window.Parent.content.txtComputer.Value = computername.Value  	
+    Err.Clear
+  End If
+  On Error Goto 0
+End Sub
+
+Sub ShowSessions(txtServer)
+	Window.Parent.content.Location.HREF=".\session.htm"
+End Sub
+
+Sub AltShowSessions(txtServer)
+	Set objShell = CreateObject("Wscript.Shell")
+	Set fso = CreateObject("Scripting.FileSystemObject")
+	txtRunLine = ".\psexec.exe \\" & txtServer & " net sessions > .\netsessions.txt"
+	If (fso.FileExists(".\netsessions.txt")) Then
+		fso.DeleteFile(".\netsessions.txt")
+	End If
+	'returnCode = objShell.Run(txtRunLine,1,True)
+	objShell.Exec(txtRunLine)
+	If (fso.FileExists(".\netsessions.txt")) Then
+		Window.Parent.content.Location.HREF="netsessions.txt"
+	End If	
+End Sub
+
+Sub GetList()
+  'This method will be called when button "GO" is clicked
+  Dim txtCommand
+  Select Case context.Value
+  	Case "LISTWS"
+  		txtCommand="ou=Workstations"
+		Select Case where.Value
+	  		Case "SERVER001"
+	  			txtCommand=txtCommand & ",ou=ou1"	
+	  		Case "SERVER001"
+	  			txtCommand=txtCommand & ",ou=ou2,ou=ou1"
+	  		Case "SERVER002"
+	  			txtCommand=txtCommand & ",ou=ou3,ou=ou1"
+		End Select
+		window.Parent.list.DisplayOU(txtCommand)
+		  
+	Case "LISTSERV"
+  		txtCommand="ou=Member Servers"
+		Select Case where.Value	
+	  		Case "SERVER001"
+	  			txtCommand=txtCommand & ",ou=ou1"  	
+	  		Case "SERVER001"
+	  			txtCommand=txtCommand & ",ou=ou2,ou=ou1"
+	  		Case "SERVER002"
+	  			txtCommand=txtCommand & ",ou=ou3,ou=ou1"
+		End Select
+		window.Parent.list.DisplayOU(txtCommand)
+			  	
+	Case "LISTLAP"
+  		txtCommand="ou=Laptops"	
+		  Select Case where.Value	
+	  		Case "SERVER001"
+	  			txtCommand=txtCommand & ",ou=ou1"  	
+	  		Case "SERVER001"
+	  			txtCommand=txtCommand & ",ou=ou2,ou=ou1"
+	  		Case "SERVER002"
+	  			txtCommand=txtCommand & ",ou=ou3,ou=ou1"
+		End Select
+		window.Parent.list.DisplayOU(txtCommand)
+
+	Case "SESSIONS"
+		window.Parent.list.Sessions(where.Value)
+		ShowSessions(where.Value)
+	Case "TXTFILE"
+		ClearList()
+		ListTXT(".data\hostslist.txt")
+		Sort
+		MoveToListBox
+  End Select  
+End Sub
+
+</SCRIPT>
+
+<body>
+Location:
+<select style="width: 150px;" name="where" id="where" size="1">
+    <option value="SERVER001">SERVER001</option>
+    <option value="SERVER001">SERVER001</option>
+    <option value="SERVER002">SERVER002</option>
+</select><br>Context:&nbsp;
+<select style="width: 150px;" name="context" id="context" size="1">
+    <option value="LISTSERV">Servers</option>
+    <option value="LISTWS">Workstations</option>
+    <option value="LISTLAP">Laptops</option>
+    <option value="SESSIONS">User Sessions</option>
+    <option value="TXTFILE">hostfile</option>
+</select>
+<br><br><center><input type="button" name="Get List" id="get_list" value="Get List" onclick="GetList"></center><br>
+	Available Items:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="header"></span><br>
+	<select size="25" name="OptionList" onChange="DisplayOption"></select>
+	<br><br>
+	<input id=resetbutton  class="button" type="button" value="Clear List" name="clear_list" title="Clear List"  onClick="ClearList">&nbsp
+	<input id=copybutton  class="button" type="button" value="Copy Name" name="copy_button" title="Copy Computer Name"  onClick="CopyClip"><br>
+	<br>
+	COMPUTER:<br><input style="width: 180px;" type="text" name="computername" id="computername">&nbsp;<input type="button" name="Use" id="Use" value="-->" onclick="OnClickButtonUse">
+	<table width="100%" border="0">
+		<tr>
+			<td width="60%" valign="top"><span id="txtArea"></span></td>
+			<td width="40%" valign="top"></td>
+		</tr>
+	</table>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!-- SLOEACSS Console - Main Application File -->
+<!-- This is a Windows HTA (HTML Application) for system administration -->
+<html>
+<title>SHIRM.MIN Console</title>
+<!-- HTA Application Configuration -->
+<HTA:APPLICATION
+  APPLICATIONNAME="objSC"
+  ID="objSC"
+  VERSION="2.0"
+  INNERBORDER="no"
+  ICON="img/SLOEACSS-console.ico"
+  SCROLLFLAT="yes"
+  NAVIGABLE="yes"/>
+<head>
+
+ <!-- Main Layout: Three-panel design -->
+<frameset rows="64,*,60">
+  <!-- Header panel: Contains application title and navigation -->
+  <frame src="header\main.htm" name="header" application="yes">
+  <!-- Main content panel: Displays computer management interface -->
+  <frame src="console\computers\main.htm" name="console" application="yes"> 
+  <!-- Status panel: Shows application status and messages -->
+  <frame src="status\main.htm" name="status" application="yes">
+ </frameset>
+
+</head>
+
+<script language="VBScript">
+
+Sub Window_OnLoad
+  'This method will be called when the application loads
+End Sub
+
+</script>
+
+<body bgcolor="white">
+
+<!--Add your controls here-->
+
+<!--{{InsertControlsHere}}-Do not remove this line-->
+</body>
+</html>

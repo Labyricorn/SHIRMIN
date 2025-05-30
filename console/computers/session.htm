@@ -1,0 +1,158 @@
+<html>
+<head>
+<title>HTAsessions</title>
+<HTA:APPLICATION
+  APPLICATIONNAME="HTAsessions"
+  ID="HTAsessions"
+  VERSION="1.0"/>
+</head>
+<style>
+table {
+	font-family: Lucida Console;
+	font-size: 10pt;
+	}
+</style>
+<script language="VBScript">
+Dim strresult
+Dim arrSessions(50,3), itemCount
+Sub Window_OnLoad
+  'This method will be called when the application loads
+  'Add your code here
+
+ Sessions(Window.Parent.list.where.Value)
+'  Sessions("IBR2SLOFP001")
+End Sub
+
+Sub Sessions(computer)
+'	Set objConnection = GetObject("WinNT://" & computer & "/LanmanServer")
+'	Set colSessions = objConnection.Sessions
+
+	BuildTable(computer)
+	SortComp()
+End Sub
+
+Sub BuildTable(computer)
+	Set objConnection = GetObject("WinNT://" & computer & "/LanmanServer")
+	Set colSessions = objConnection.Sessions
+			
+	For Each objSession In colSessions
+		AddToList objSession.Computer,objSession.User,objSession.IdleTime
+	Next
+End Sub
+
+Sub AddToList( cName, cUser, cTime )
+	itemCount = itemCount + 1
+	arrSessions(itemcount,0) = cName
+	arrSessions(itemcount,1) = cUser
+	arrSessions(itemcount,2) = SplitSec(cTime)
+End Sub
+
+Sub ShowTable()
+	strresult = "<table>" & vbCrLf
+	strresult = strresult & "<tr><td><a style=color:blue ID=link1 onclick=SortComp()>Computer</a></td><td><a style=color:blue ID=link2 onclick=SortUser()>User name</a></td><td><a style=color:blue ID=link3 onclick=SortIdle()>Idle Time</a></td></tr>" & vbCrLf
+	strresult = strresult & "<tr><td>-------------------------</td><td>-----------------------</td><td>-------------</td></tr>" & vbCrLf
+	For moveCount = 1 To itemCount
+		strresult = strresult & "<tr>" & vbCrLf
+	    strresult = strresult & "<td>\\" & arrSessions(moveCount,0) & "</td>" & vbCrLf
+	    strresult = strresult & "<td>" & arrSessions(moveCount,1) & "</td>" & vbCrLf
+	    'strresult = strresult & "<td>" & FormatDateTime(objSession.ConnectTime,2) & "</td>" & vbCrLf
+	    strresult = strresult & "<td>" & arrSessions(moveCount,2) & "</td>" & vbCrLf
+	    'strresult = strresult & "<td>" & objSession.Name & "</td>" & vbCrLf
+	    strresult = strresult & "</tr>" & vbCrLf
+	Next
+	strresult = strresult & "</table>" & vbCRLF
+	SPNsessions.InnerHTML = strresult
+End Sub
+
+Sub SortComp()
+	Dim i, j, txtComp, txtUser, txtIdle
+
+	For i = ( itemCount - 1 ) to 0 Step -1
+		For j= 0 to i
+			If UCase( arrSessions( j , 0 ) ) > UCase( arrSessions( j + 1 , 0 ) ) Then
+				txtComp      = arrSessions( j + 1 , 0 )
+				txtUser		 = arrSessions( j + 1 , 1 )
+				txtIdle		 = arrSessions( j + 1 , 2 )
+				arrSessions( j + 1 , 0 ) = arrSessions( j , 0 )
+				arrSessions( j + 1 , 1 ) = arrSessions( j , 1)
+				arrSessions( j + 1 , 2 ) = arrSessions( j , 2)
+				arrSessions( j , 0 )     = txtComp
+				arrSessions( j , 1 )     = txtUser
+				arrSessions( j , 2 )     = txtIdle
+			End If
+		Next
+	Next 
+	ShowTable()
+End Sub
+
+Sub SortUser()
+	Dim i, j, txtComp, txtUser, txtIdle
+
+	For i = ( itemCount - 1 ) to 0 Step -1
+		For j= 0 to i
+			If UCase( arrSessions( j , 1 ) ) > UCase( arrSessions( j + 1 , 1 ) ) Then
+				txtComp      = arrSessions( j + 1 , 0 )
+				txtUser		 = arrSessions( j + 1 , 1 )
+				txtIdle		 = arrSessions( j + 1 , 2 )
+				arrSessions( j + 1 , 0 ) = arrSessions( j , 0 )
+				arrSessions( j + 1 , 1 ) = arrSessions( j , 1)
+				arrSessions( j + 1 , 2 ) = arrSessions( j , 2)
+				arrSessions( j , 0 )     = txtComp
+				arrSessions( j , 1 )     = txtUser
+				arrSessions( j , 2 )     = txtIdle
+			End If
+		Next
+	Next
+	ShowTable()
+End Sub
+
+Sub SortIdle()
+	Dim i, j, txtComp, txtUser, txtIdle
+
+	For i = ( itemCount - 1 ) to 0 Step -1
+		For j= 0 to i
+			If UCase( arrSessions( j , 2 ) ) > UCase( arrSessions( j + 1 , 2 ) ) Then
+				txtComp      = arrSessions( j + 1 , 0 )
+				txtUser		 = arrSessions( j + 1 , 1 )
+				txtIdle		 = arrSessions( j + 1 , 2 )
+				arrSessions( j + 1 , 0 ) = arrSessions( j , 0 )
+				arrSessions( j + 1 , 1 ) = arrSessions( j , 1)
+				arrSessions( j + 1 , 2 ) = arrSessions( j , 2)
+				arrSessions( j , 0 )     = txtComp
+				arrSessions( j , 1 )     = txtUser
+				arrSessions( j , 2 )     = txtIdle
+			End If
+		Next
+	Next
+	ShowTable() 
+End Sub
+
+Function SplitSec(pNumSec)
+  Dim d, h, m, s
+  Dim h1, m1
+
+  d = int(pNumSec/86400)
+  h1 = pNumSec - (d * 86400)
+  h = int(h1/3600)
+  h = right("0" & CStr(h),2)
+  m1 = h1 - (h * 3600)
+  m = int(m1/60)
+  m = right("0" & CStr(m),2)
+  s = m1 - (m * 60)
+  s = right("0" & CStr(s),2)
+
+  SplitSec = cStr(d) & "D " & cStr(h) & ":" & cStr(m) & ":" & cStr(s)
+End Function
+
+</script>
+
+<body bgcolor="white">
+<span id="SPNsessions">
+<table>
+</table>
+</span>
+<!--Add your controls here-->
+
+<!--{{InsertControlsHere}}-Do not remove this line-->
+</body>
+</html>

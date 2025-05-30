@@ -1,0 +1,29 @@
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Temporary files
+*.tmp
+*.temp
+
+# Log files
+*.log
+
+# User-specific files
+hostslist.txt
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*~

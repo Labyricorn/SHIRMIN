@@ -1,0 +1,34 @@
+<!-- Computer Management Interface -->
+<!-- This page provides a split view for computer list and details -->
+<html>
+<!-- HTA Configuration for Computer Management -->
+<HTA:APPLICATION
+  APPLICATIONNAME="objSC"
+  ID="objSC"
+  VERSION="2.0"/>
+<head>
+<!-- Two-column layout for computer management -->
+<frameset cols="320,*">
+  <!-- Left panel: List of computers -->
+  <frame src="listomatic.htm" name="list" application="yes">
+  <!-- Right panel: Detailed computer information -->
+  <frame src="compinfo.htm" name="content" application="yes"> 
+ </frameset>
+</frameset>
+</head>
+
+<script language="VBScript">
+
+Sub Window_OnLoad
+  'This method will be called when the application loads
+End Sub
+
+</script>
+
+<body>
+
+<!--Add your controls here-->
+
+<!--{{InsertControlsHere}}-Do not remove this line-->
+</body>
+</html>
